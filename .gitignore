@@ -1,0 +1,30 @@
+# Credenciales y configuracion local
+.env
+.local-backups/
+.env.*
+!.env.example
+!.env.*.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+db.sqlite3
+db.sqlite3-journal
+
+# Frontend
+node_modules/
+dist/
+coverage/
+
+# Archivos generados y locales
+*.log
+media/
+staticfiles/
+.idea/
+.DS_Store
+Thumbs.db
