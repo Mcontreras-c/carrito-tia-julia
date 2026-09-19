@@ -7,6 +7,18 @@ export type CreditInput = { name: string; phone: string; dueDate: string }
 export type Order = { id: string; number: number; day?: string; revision?: number; name: string; created: string; status: Status; lines: Line[]; credit?: Credit; payment: null | { method: Method; total: number; received: number | null; change: number | null; date: string } }
 export type Store = { version: 1; orders: Order[] }
 export const KEY = 'tia-julia.orders.v1'
+// crypto.randomUUID only exists in secure contexts (HTTPS or localhost); fall back to
+// building a v4 UUID from crypto.getRandomValues (available everywhere) until TLS is set up.
+export function newId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  const bytes = new Uint8Array(16)
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') crypto.getRandomValues(bytes)
+  else for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256)
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
 export const money = (n: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n)
 export const total = (o: Order) => o.lines.reduce((s, l) => s + l.price * l.quantity, 0)
 export const editable = (o: Order) => o.status === 'Pendiente' && !o.payment && !o.credit
@@ -20,7 +32,7 @@ export function cancelOrder(o: Order): Order {
   if (!editable(o)) throw Error('Solo se pueden cancelar pedidos pendientes y sin pagar.')
   return { ...o, status: 'Cancelado' }
 }
-export function newOrder(number: number): Order { return { id: crypto.randomUUID(), number, name: '', created: new Date().toISOString(), status: 'Pendiente', lines: [], payment: null } }
+export function newOrder(number: number): Order { return { id: newId(), number, name: '', created: new Date().toISOString(), status: 'Pendiente', lines: [], payment: null } }
 export function isProduct(v: unknown): v is Product {
   if (!v || typeof v !== 'object') return false
   const p = v as Record<string, unknown>
@@ -31,7 +43,7 @@ export function addProduct(o: Order, p: Product): Order {
   if (!p.disponible) throw Error('Este producto está agotado.')
   const line = o.lines.find(l => l.productId === p.id && l.price === p.precio && !l.note)
   if (line && line.quantity >= 99) throw Error('Máximo 99 unidades por línea.')
-  return { ...o, lines: line ? o.lines.map(l => l.id === line.id ? { ...l, quantity: l.quantity + 1 } : l) : [...o.lines, { id: crypto.randomUUID(), productId: p.id, name: p.nombre, price: p.precio, quantity: 1, note: '' }] }
+  return { ...o, lines: line ? o.lines.map(l => l.id === line.id ? { ...l, quantity: l.quantity + 1 } : l) : [...o.lines, { id: newId(), productId: p.id, name: p.nombre, price: p.precio, quantity: 1, note: '' }] }
 }
 export function parseCash(text: string): number | null {
   if (!/^\d{1,12}$/.test(text)) return null

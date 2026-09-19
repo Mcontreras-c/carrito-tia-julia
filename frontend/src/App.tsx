@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { addProduct, advance, cancelOrder, editLine, editable, isOpenOrder, isProduct, leaveOnCredit, money, pay, total } from './orders'
+import { addProduct, advance, cancelOrder, editLine, editable, isOpenOrder, isProduct, leaveOnCredit, money, newId, pay, total } from './orders'
 import type { Order, Product, Store } from './orders'
 import './App.css'
 import DailySales from './SalesToday'
@@ -134,13 +134,13 @@ function App() {
       const before = currentStore.current.orders.find(o => o.id === id)
       if (!before) return false
       const after = fn(before)
-      const key = crypto.randomUUID()
+      const key = newId()
       return execute(async () => { remember(await changeOrder(before, after, key)) })
     })
   }
   async function create() {
     await enqueue(async () => {
-      const key = crypto.randomUUID()
+      const key = newId()
       return execute(async () => {
         const next = await createOrder(key)
         remember(next)
@@ -176,7 +176,7 @@ function App() {
       if (!editable(o)) throw Error('Este pedido ya no se puede editar.')
       const line = o.lines.find(l => l.id === id)
       if (!line || line.quantity < 2) return o
-      return { ...o, lines: [...o.lines.map(l => l.id === id ? { ...l, quantity: l.quantity - 1 } : l), { ...line, id: crypto.randomUUID(), quantity: 1 }] }
+      return { ...o, lines: [...o.lines.map(l => l.id === id ? { ...l, quantity: l.quantity - 1 } : l), { ...line, id: newId(), quantity: 1 }] }
     })
     if (ok) setNotice('Unidad separada. Puedes escribir una indicación diferente en su línea.')
   }
