@@ -24,13 +24,16 @@ load_dotenv(BASE_DIR / ".env.postgresql")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k9my0^g=0n@m2738lob40(c26^shc558so@743p^05cmg^qmsg'
+# Override with SECRET_KEY in .env for any server reachable outside localhost.
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-k9my0^g=0n@m2738lob40(c26^shc558so@743p^05cmg^qmsg')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5174', 'http://127.0.0.1:5174']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()]
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv(
+    'CSRF_TRUSTED_ORIGINS', 'http://localhost:5174,http://127.0.0.1:5174'
+).split(',') if o.strip()]
 
 
 # Application definition
